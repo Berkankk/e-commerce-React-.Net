@@ -15,4 +15,6 @@ public class Product
     public bool IsActive { get; set; }
     public string? ProductImageUrl { get; set; }
      public int? Stock { get; set; }
+     
+     
 }
