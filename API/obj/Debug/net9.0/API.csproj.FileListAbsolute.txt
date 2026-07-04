@@ -154,3 +154,4 @@ C:\Users\Berkan\Desktop\e-commerce\API\bin\Debug\net9.0\runtimes\win-arm64\nativ
 C:\Users\Berkan\Desktop\e-commerce\API\bin\Debug\net9.0\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\Berkan\Desktop\e-commerce\API\bin\Debug\net9.0\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\Berkan\Desktop\e-commerce\API\bin\Debug\net9.0\API.staticwebassets.runtime.json
+C:\Users\Berkan\Desktop\e-commerce\API\obj\Debug\net9.0\API.sourcelink.json
