@@ -1,21 +1,38 @@
-# Güncel Kök Dizin .gitignore Dosyası
-
-# .NET Derleme Çıktıları
+# ==========================
+# .NET
+# ==========================
 **/bin/
 **/obj/
 
-# Node/Frontend Bağımlılıkları ve Çıktıları
+# ==========================
+# Node.js / React / Vite
+# ==========================
 **/node_modules/
 **/dist/
 .local
+.env
 
-# SQLite Geçici ve Veritabanı Dosyaları
+# ==========================
+# SQLite
+# ==========================
 *.db
 *.db-shm
 *.db-wal
 
-# Loglar ve Editör Dosyaları
+# ==========================
+# Logs
+# ==========================
 *.log
+
+# ==========================
+# IDE
+# ==========================
 .vscode/
 .idea/
+.vs/
+
+# ==========================
+# OS Files
+# ==========================
 .DS_Store
+Thumbs.db
