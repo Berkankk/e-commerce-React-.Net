@@ -91,7 +91,7 @@ function ProductItem({ product }: ProductItemProps) {
           {/* <IconButton sx={{ border: "1px solid #ddd" }}>
             <VisibilityOutlinedIcon />
           </IconButton> */}
-                  <IconButton
+          <IconButton
           component={Link}
           to={`/catalog/${product.id}`}
           sx={{ border: "1px solid #ddd" }}
