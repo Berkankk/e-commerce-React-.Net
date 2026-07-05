@@ -21,6 +21,10 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build(); 
+
+app.UseMiddleware<API.Middlewares.ExceptionHandling>();
+
+
 app.UseStaticFiles();
 if (app.Environment.IsDevelopment())
 {
