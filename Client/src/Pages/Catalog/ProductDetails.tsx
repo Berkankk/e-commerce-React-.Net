@@ -14,12 +14,35 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import type { IProduct } from "../../../Model/IProduct";
+import { AddShoppingCart } from "@mui/icons-material";
+import requests from "../../api/requests";
+import CircularProgress from "@mui/material/CircularProgress";
+import { toast } from "react-toastify";
 
 export default function ProductDetails() {
+
+
+    const [loading, setLoading] = useState(true);
+    const [addItemLoading, setAddItemLoading] = useState(false);
+
+    function handleAddItem(productId: number) {
+      setAddItemLoading(true);
+
+      requests.Cart.addItem(productId)
+        .then(() => {
+          toast.success("Ürün sepete eklendi.");
+        })
+        .catch((error) => {
+          console.log(error);
+          toast.error("Ürün sepete eklenemedi.");
+        })
+        .finally(() => setAddItemLoading(false));
+    }
+
   const { id } = useParams();
 
   const [product, setProduct] = useState<IProduct | null>(null);
-  const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     fetch(`http://localhost:5164/api/products/${id}`)
@@ -131,11 +154,19 @@ export default function ProductDetails() {
               Stok adedi: {product.stock}
             </Typography>
 
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<ShoppingCartOutlinedIcon />}
-              disabled={product.stock <= 0}
+                <Button
+              variant="outlined"
+              size="small"
+              startIcon={
+                addItemLoading ? (
+                  <CircularProgress size={18} />
+                ) : (
+                  <AddShoppingCart />
+                )
+              }
+              color="success"
+              onClick={() => handleAddItem(product.id)}
+              disabled={product.stock <= 0 || addItemLoading}
               sx={{
                 borderRadius: 3,
                 px: 4,
@@ -144,7 +175,7 @@ export default function ProductDetails() {
                 fontWeight: 700,
               }}
             >
-              Sepete Ekle
+              {addItemLoading ? "Ekleniyor..." : "Ürün Ekle"}
             </Button>
           </Box>
         </Box>

@@ -43,6 +43,7 @@ app.UseCors(options =>
 {
     options.AllowAnyHeader();
     options.AllowAnyMethod();
+    options.AllowCredentials(); //Burası cookie izin vermemiz için yazıldı
     options.WithOrigins("http://localhost:3000", "http://127.0.0.1:3000");
 });
 app.UseAuthorization();
