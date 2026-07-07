@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CssBaseline, Container } from "@mui/material";
 import Header from "./Components/Header";
-import type { IProduct } from "../Model/IProduct";
+import type { IProduct } from "./Model/IProduct";
 import { Outlet } from "react-router";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

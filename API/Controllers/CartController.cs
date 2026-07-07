@@ -34,8 +34,11 @@ public class CartController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Cartdto>> AddItemToCart(int productId, int quantity)
+    public async Task<ActionResult<Cartdto>> AddItemToCart(int productId, int quantity = 1)
     {
+        if (quantity <= 0)
+            return BadRequest(new { title = "Quantity 0'dan büyük olmalıdır." });
+
         var customerId = GetCustomerId();
 
         var product = await _context.Products.FindAsync(productId);
@@ -57,6 +60,17 @@ public class CartController : ControllerBase
             _context.Carts.Add(cart);
         }
 
+        var existingItem = cart.CartItems
+            .FirstOrDefault(x => x.ProductId == productId);
+
+        var currentQuantity = existingItem?.Quantity ?? 0;
+
+        if (currentQuantity + quantity > 3)
+            return BadRequest(new { title = "Bu üründen sepete en fazla 3 adet ekleyebilirsiniz." });
+
+        if (currentQuantity + quantity > product.Stock)
+            return BadRequest(new { title = "Sepete eklemek istediğiniz adet stok miktarını aşıyor." });
+
         cart.AddItem(product, quantity);
 
         await _context.SaveChangesAsync();
@@ -70,8 +84,11 @@ public class CartController : ControllerBase
     }
 
     [HttpDelete]
-    public async Task<ActionResult<Cartdto>> DeleteItemFromCart(int productId, int quantity)
+    public async Task<ActionResult<Cartdto>> DeleteItemFromCart(int productId, int quantity = 1)
     {
+        if (quantity <= 0)
+            return BadRequest(new { title = "Quantity 0'dan büyük olmalıdır." });
+
         var customerId = Request.Cookies["customerId"];
 
         if (string.IsNullOrEmpty(customerId))
@@ -113,7 +130,10 @@ public class CartController : ControllerBase
             Response.Cookies.Append("customerId", customerId, new CookieOptions
             {
                 IsEssential = true,
-                Expires = DateTime.Now.AddDays(30)
+                Expires = DateTime.Now.AddDays(30),
+                HttpOnly = true,
+                SameSite = SameSiteMode.Lax,
+                Secure = false
             });
         }
 
@@ -126,7 +146,7 @@ public class CartController : ControllerBase
         {
             CartId = cart.CartId,
             CustomerId = cart.CustomerId,
-            GetCartItemDto = cart.CartItems.Select(item => new CartItemDto
+            CartItems = cart.CartItems.Select(item => new CartItemDto
             {
                 ProductId = item.ProductId,
                 Name = item.Product.ProductName,

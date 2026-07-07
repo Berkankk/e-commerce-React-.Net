@@ -1,5 +1,14 @@
-import { AppBar, Box, Button, Toolbar, Typography } from "@mui/material";
-import { NavLink,Link  } from "react-router";
+import {
+  AppBar,
+  Badge,
+  Box,
+  Button,
+  IconButton,
+  Toolbar,
+  Typography,
+} from "@mui/material";
+import { NavLink, Link } from "react-router";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 
 const links = [
   { title: "Home", to: "/" },
@@ -45,8 +54,15 @@ export default function Header() {
             >
               {link.title}
             </Button>
-            
           ))}
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <IconButton component={Link} to="/cart" size="large" color="inherit">
+            <Badge badgeContent={2} color="secondary">
+              <ShoppingCartIcon />
+            </Badge>
+          </IconButton>
         </Box>
       </Toolbar>
     </AppBar>

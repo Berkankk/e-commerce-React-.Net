@@ -8,6 +8,7 @@ import ContactPage from "../Pages/ContactPage";
 import ErrorPage from "../Pages/Catalog/ErrorPage";
 import ServerError from "../Error/ServerError";
 import NotFound from "../Error/NotFound";
+import ShoppingCartPage from "../Pages/Cart/ShoppingCartPage";
 
 
 //Const değişken tanımlarken sonradan değiştirilemeyecek bir değişken tanımlamak için kullanılır.
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
         {path: "/about", element: <AboutPage />},
         {path: "/contact", element: <ContactPage />},
         {path: "/catalog", element: <CatalogPage />},
+        {path: "/cart", element: <ShoppingCartPage />},
         {path:  "catalog/:id", element: <ProductDetails />}, //:id ile dinamik bir parametre tanımlanır
         {path: "/error", element: <ErrorPage /> },
         {path: "/server-error", element: <ServerError /> },

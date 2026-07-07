@@ -13,7 +13,7 @@ import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import type { IProduct } from "../../../Model/IProduct";
+import type { IProduct } from "../../Model/IProduct";
 import { AddShoppingCart } from "@mui/icons-material";
 import requests from "../../api/requests";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -25,18 +25,39 @@ export default function ProductDetails() {
     const [loading, setLoading] = useState(true);
     const [addItemLoading, setAddItemLoading] = useState(false);
 
+    // function handleAddItem(productId: number) {
+    //   setAddItemLoading(true);
+
+    //   requests.Cart.addItem(productId)
+    //     .then(() => {
+    //       toast.success("Ürün sepete eklendi.");
+    //     })
+    //     .catch((error) => {
+    //       console.log(error);
+    //       toast.error("Ürün sepete eklenemedi.");
+    //     })
+    //     .finally(() => setAddItemLoading(false));
+    // }
     function handleAddItem(productId: number) {
+      if (addItemLoading) return;
+
       setAddItemLoading(true);
 
       requests.Cart.addItem(productId)
         .then(() => {
-          toast.success("Ürün sepete eklendi.");
+          toast.success("Ürün sepete eklendi.", {
+            toastId: `cart-add-${productId}`,
+          });
         })
         .catch((error) => {
           console.log(error);
           toast.error("Ürün sepete eklenemedi.");
         })
-        .finally(() => setAddItemLoading(false));
+        .finally(() => {
+          setTimeout(() => {
+            setAddItemLoading(false);
+          }, 700);
+        });
     }
 
   const { id } = useParams();

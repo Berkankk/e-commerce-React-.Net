@@ -4,8 +4,9 @@ public class Cartdto()
 {
     public int CartId { get; set; }
     public string? CustomerId { get; set; } = null!;
-    public List<CartItemDto> GetCartItemDto { get; set; } = new();
+    public List<CartItemDto> CartItems { get; set; } = new();
 }
+
 
 public class CartItemDto()
 {

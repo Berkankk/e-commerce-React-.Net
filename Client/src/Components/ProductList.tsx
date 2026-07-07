@@ -1,4 +1,4 @@
-import type { IProduct } from "../../Model/IProduct";
+import type { IProduct } from "../Model/IProduct";
 import ProductItem from "./ProductItem";
 import {
   Grid,

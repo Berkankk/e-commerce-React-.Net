@@ -1,4 +1,4 @@
-import type { IProduct } from "../../Model/IProduct";
+import type { IProduct } from "../Model/IProduct";
 import {
   Card,
   CardMedia,
@@ -13,6 +13,7 @@ import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { Link } from "react-router";
+import requests from "../api/requests";
 
 type ProductItemProps = {
   product: IProduct;
@@ -84,7 +85,14 @@ function ProductItem({ product }: ProductItemProps) {
         </Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <IconButton color="primary" sx={{ border: "1px solid #ddd" }}>
+          {/* <IconButton color="primary" sx={{ border: "1px solid #ddd" }}>
+            <ShoppingCartOutlinedIcon />
+          </IconButton> */}
+          <IconButton
+            color="primary"
+            sx={{ border: "1px solid #ddd" }}
+            onClick={() => requests.Cart.addItem(product.id)}
+          >
             <ShoppingCartOutlinedIcon />
           </IconButton>
 
