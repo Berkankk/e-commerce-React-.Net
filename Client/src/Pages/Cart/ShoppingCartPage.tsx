@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import requests from "../../api/requests";
-import type { Cart } from "../../Model/ICart";
 import {
   Box,
   CircularProgress,
@@ -14,9 +13,11 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import { useCartContext } from "../../Context/CartContext";
+import { Cart } from "../../Model/ICart";
 
 export default function ShoppingCartPage() {
-  const [cart, setCart] = useState<Cart | null>(null);
+  const { cart, setCart } = useCartContext();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function ShoppingCartPage() {
       .then((cart) => setCart(cart))
       .catch((error) => console.log(error))
       .finally(() => setLoading(false));
-  }, []);
+  }, [setCart]);
 
   if (loading) {
     return (
