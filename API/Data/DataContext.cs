@@ -10,7 +10,8 @@ public class DataContext : DbContext
     }
 
     public DbSet<Product> Products { get; set; }
-
+    public DbSet<Cart> Carts => Set<Cart>();
+    // public DbSet<CartItem> CartItems { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
