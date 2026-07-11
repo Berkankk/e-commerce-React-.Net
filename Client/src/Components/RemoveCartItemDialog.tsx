@@ -46,7 +46,10 @@ export default function RemoveCartItemDialog({
   cancelLabel = "Vazgeç",
   confirmLabel = "Sepetten kaldır",
 }: RemoveCartItemDialogProps) {
-  const handleClose = () => {
+  const handleClose = (
+    _event: unknown,
+    reason?: "backdropClick" | "escapeKeyDown"
+  ) => {
     /*
       API isteği devam ederken dialog'un kapanmasını engelliyoruz.
 
@@ -58,6 +61,11 @@ export default function RemoveCartItemDialog({
       return;
     }
 
+    if (reason === "backdropClick" || reason === "escapeKeyDown") {
+      onCancel();
+      return;
+    }
+
     onCancel();
   };
 
@@ -65,20 +73,21 @@ export default function RemoveCartItemDialog({
     <Dialog
       open={open}
       onClose={handleClose}
-      disableEscapeKeyDown={loading}
       fullWidth
       maxWidth="xs"
       aria-labelledby="remove-cart-item-dialog-title"
       aria-describedby="remove-cart-item-dialog-description"
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          p: 1,
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 3,
+            p: 1,
+          },
         },
       }}
     >
       <DialogTitle id="remove-cart-item-dialog-title">
-        <Stack direction="row" alignItems="center" spacing={2}>
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
           <Avatar
             sx={{
               bgcolor: "error.lighter",
@@ -91,7 +100,7 @@ export default function RemoveCartItemDialog({
           </Avatar>
 
           <Box>
-            <Typography variant="h6" component="div" fontWeight={700}>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 700 }}>
               {title}
             </Typography>
 
@@ -111,8 +120,8 @@ export default function RemoveCartItemDialog({
           <Stack
             direction="row"
             spacing={2}
-            alignItems="center"
             sx={{
+              alignItems: "center",
               border: 1,
               borderColor: "divider",
               borderRadius: 2,
@@ -137,7 +146,7 @@ export default function RemoveCartItemDialog({
             )}
 
             <Box sx={{ minWidth: 0 }}>
-              <Typography fontWeight={700} noWrap>
+              <Typography sx={{ fontWeight: 700 }} noWrap>
                 {productName}
               </Typography>
 

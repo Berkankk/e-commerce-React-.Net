@@ -7,6 +7,7 @@ import { useCartContext } from "../../Context/CartContext";
 import RemoveCartItemDialog from "../../Components/RemoveCartItemDialog";
 import {
   Box,
+  Button,
   CircularProgress,
   Container,
   Divider,
@@ -22,7 +23,8 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-
+import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -248,10 +250,12 @@ const handleConfirmRemove = async () => {
   if (loading) {
     return (
       <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="50vh"
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "50vh",
+        }}
       >
         <CircularProgress />
       </Box>
@@ -273,6 +277,10 @@ const cartTotal = cartItems.reduce(
   (total, item) => total + item.price * item.quantity,
   0
 );
+
+const shippingPrice = cartTotal >= 5000 ? 0 : 250;
+
+const grandTotal = cartTotal + shippingPrice;
 
 const totalQuantity = cartItems.reduce(
   (total, item) => total + item.quantity,
@@ -298,7 +306,7 @@ if (cartItems.length === 0) {
           }}
         />
 
-        <Typography variant="h5" fontWeight={700}>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
           Sepetiniz boş
         </Typography>
 
@@ -315,14 +323,13 @@ return (
     <Container maxWidth="lg" sx={{ mt: 5, mb: 8 }}>
       <Stack
         direction="row"
-        alignItems="center"
         spacing={1.5}
-        sx={{ mb: 3 }}
+        sx={{ alignItems: "center", mb: 3 }}
       >
         <ShoppingCartOutlinedIcon fontSize="large" />
 
         <Box>
-          <Typography variant="h4" fontWeight={700}>
+          <Typography variant="h4" sx={{ fontWeight: 700 }}>
             Alışveriş Sepeti
           </Typography>
 
@@ -332,14 +339,25 @@ return (
         </Box>
       </Stack>
 
-      <TableContainer
-        component={Paper}
-        elevation={2}
+      <Box
         sx={{
-          borderRadius: 3,
-          overflow: "hidden",
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            lg: "minmax(0, 1fr) 360px",
+          },
+          gap: 3,
+          alignItems: "start",
         }}
       >
+        <TableContainer
+          component={Paper}
+          elevation={2}
+          sx={{
+            borderRadius: 3,
+            overflow: "hidden",
+          }}
+        >
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: "action.hover" }}>
@@ -400,7 +418,7 @@ return (
                   </TableCell>
 
                   <TableCell>
-                    <Typography fontWeight={600}>
+                    <Typography sx={{ fontWeight: 600 }}>
                       {item.name}
                     </Typography>
 
@@ -413,7 +431,7 @@ return (
                   </TableCell>
 
                   <TableCell align="right">
-                    <Typography fontWeight={500}>
+                    <Typography sx={{ fontWeight: 500 }}>
                       {formatPrice(item.price)}
                     </Typography>
                   </TableCell>
@@ -421,9 +439,8 @@ return (
                   <TableCell align="center">
                     <Stack
                       direction="row"
-                      alignItems="center"
-                      justifyContent="center"
                       spacing={1}
+                      sx={{ alignItems: "center", justifyContent: "center" }}
                     >
                       <Tooltip title="Adedi azalt">
                         <span>
@@ -458,7 +475,7 @@ return (
                         {isUpdating ? (
                           <CircularProgress size={18} />
                         ) : (
-                          <Typography fontWeight={700}>
+                          <Typography sx={{ fontWeight: 700 }}>
                             {item.quantity}
                           </Typography>
                         )}
@@ -485,7 +502,7 @@ return (
                   </TableCell>
 
                   <TableCell align="right">
-                    <Typography fontWeight={700}>
+                    <Typography sx={{ fontWeight: 700 }}>
                       {formatPrice(
                         item.price * item.quantity
                       )}
@@ -521,26 +538,115 @@ return (
           sx={{
             p: 3,
             display: "flex",
-            justifyContent: "flex-end",
+            justifyContent: "space-between",
             alignItems: "center",
             gap: 3,
             backgroundColor: "action.hover",
+            flexWrap: "wrap",
           }}
         >
-          <Box sx={{ textAlign: "right" }}>
+          <Box>
             <Typography color="text.secondary">
               Genel toplam
             </Typography>
 
-            <Typography variant="h5" fontWeight={800}>
+            <Typography variant="h5" sx={{ fontWeight: 800 }}>
               {formatPrice(cartTotal)}
+            </Typography>
+          </Box>
+
+          <Box sx={{ textAlign: "right" }}>
+            <Typography color="text.secondary">
+              Tahmini kargo
+            </Typography>
+
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              {shippingPrice === 0
+                ? "Ücretsiz"
+                : formatPrice(shippingPrice)}
             </Typography>
           </Box>
         </Box>
       </TableContainer>
-    </Container>
 
-    <RemoveCartItemDialog
+      <Paper
+        elevation={2}
+        sx={{
+          p: 3,
+          borderRadius: 3,
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          minWidth: 280,
+        }}
+      >
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          Sipariş Özeti
+        </Typography>
+
+        <Stack spacing={1}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography color="text.secondary">Ürün toplamı</Typography>
+            <Typography>{formatPrice(cartTotal)}</Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography color="text.secondary">Kargo</Typography>
+            <Typography>
+              {shippingPrice === 0
+                ? "Ücretsiz"
+                : formatPrice(shippingPrice)}
+            </Typography>
+          </Box>
+
+          <Divider />
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              Toplam
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800 }}>
+              {formatPrice(grandTotal)}
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Button
+          variant="contained"
+          size="large"
+          endIcon={<LockOutlinedIcon />}
+          sx={{ mt: 1 }}
+        >
+          Ödeme Yap
+        </Button>
+
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <LocalShippingOutlinedIcon color="action" />
+          <Typography variant="body2" color="text.secondary">
+            5000 TL ve üzeri siparişlerde kargo ücretsiz.
+          </Typography>
+        </Stack>
+      </Paper>
+    </Box>
+  </Container>
+
+  <RemoveCartItemDialog
       open={pendingRemovalProductId !== null}
       productName={pendingRemovalItem?.name ?? ""}
       productImageUrl={
