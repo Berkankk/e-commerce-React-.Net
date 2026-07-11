@@ -1,107 +1,560 @@
 import { useEffect, useState } from "react";
+import { AxiosError } from "axios";
+import { toast } from "react-toastify";
+
 import requests from "../../api/requests";
+import { useCartContext } from "../../Context/CartContext";
+import RemoveCartItemDialog from "../../Components/RemoveCartItemDialog";
 import {
   Box,
   CircularProgress,
   Container,
+  Divider,
+  IconButton,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import { useCartContext } from "../../Context/CartContext";
-import { Cart } from "../../Model/ICart";
+
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 
 export default function ShoppingCartPage() {
   const { cart, setCart } = useCartContext();
+
+  // Sayfa ilk açıldığında sepet yüklenirken kullanılır.
   const [loading, setLoading] = useState(true);
+
+  // Hangi ürünün API işlemi devam ediyor?
+  const [updatingProductId, setUpdatingProductId] =
+    useState<number | null>(null);
+
+const [pendingRemovalProductId, setPendingRemovalProductId] =
+  useState<number | null>(null);
+
 
   useEffect(() => {
     requests.Cart.get()
-      .then((cart) => setCart(cart))
-      .catch((error) => console.log(error))
-      .finally(() => setLoading(false));
+      .then((cart) => {
+        setCart(cart);
+      })
+      .catch((error) => {
+        console.log("Sepet alınamadı:", error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [setCart]);
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("tr-TR", {
+      style: "currency",
+      currency: "TRY",
+    }).format(price);
+  };
+
+  const getErrorMessage = (
+    error: unknown,
+    defaultMessage: string
+  ) => {
+    const axiosError = error as AxiosError<any>;
+
+    return (
+      axiosError.response?.data?.title ??
+      axiosError.response?.data?.message ??
+      defaultMessage
+    );
+  };
+
+  const handleIncrease = async (
+    productId: number
+  ) => {
+    /*
+      Bu ürün için zaten devam eden bir işlem varsa
+      ikinci isteği gönderme.
+    */
+    if (updatingProductId === productId) {
+      return;
+    }
+
+    try {
+      /*
+        Butonlara basıldığı anda ürünün ID'sini state'e
+        yazıyoruz. Böylece ilgili butonlar kapanacak.
+      */
+      setUpdatingProductId(productId);
+
+      /*
+        Backend'e quantity=1 gönderiyoruz.
+        Backend ürünü bir adet artırıp güncel sepeti
+        CartDto olarak geri döndürüyor.
+      */
+      const updatedCart =
+        await requests.Cart.addItem(productId, 1);
+
+      /*
+        Güncel sepeti Context'e yazıyoruz.
+        React yeni cart değerini görünce tabloyu
+        otomatik yeniden render eder.
+      */
+      setCart(updatedCart);
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          "Ürün adedi artırılamadı."
+        )
+      );
+    } finally {
+      /*
+        İstek başarılı olsa da hata alsa da
+        butonların tekrar açılması gerekiyor.
+      */
+      setUpdatingProductId(null);
+    }
+  };
+
+  const handleDecrease = async (
+    productId: number
+  ) => {
+    if (updatingProductId === productId) {
+      return;
+    }
+
+    try {
+      setUpdatingProductId(productId);
+
+      /*
+        DELETE endpoint'ine quantity=1 gönderiyoruz.
+        Backend ürün miktarını bir azaltıyor.
+      */
+      const updatedCart =
+        await requests.Cart.deleteItem(productId, 1);
+
+      setCart(updatedCart);
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          "Ürün adedi azaltılamadı."
+        )
+      );
+    } finally {
+      setUpdatingProductId(null);
+    }
+  };
+
+const handleOpenRemoveDialog = (productId: number) => {
+  /*
+    Burada henüz API isteği göndermiyoruz.
+
+    Sadece kullanıcının kaldırmak istediği ürünün
+    ID'sini state'e yazıyoruz.
+    pendingRemovalProductId dolu olduğu için dialog açılacak.
+  */
+  setPendingRemovalProductId(productId);
+};
+
+const handleCloseRemoveDialog = () => {
+  /*
+    Seçili ürün ID'sini temizlediğimizde dialog kapanır.
+  */
+  setPendingRemovalProductId(null);
+};
+
+const handleConfirmRemove = async () => {
+  /*
+    Herhangi bir ürün seçilmediyse işlem yapma.
+  */
+  if (pendingRemovalProductId === null) {
+    return;
+  }
+
+  /*
+    Seçilen ürünü güncel sepet verisinden buluyoruz.
+
+    Ürün nesnesini ayrıca state'e kopyalamıyoruz.
+    Böylece duplicate state oluşturmuyoruz.
+  */
+  const selectedItem = cart?.cartItems.find(
+    (item) =>
+      item.productId === pendingRemovalProductId
+  );
+
+  if (!selectedItem) {
+    toast.error("Kaldırılacak ürün sepette bulunamadı.");
+    setPendingRemovalProductId(null);
+    return;
+  }
+
+  /*
+    Aynı ürün için zaten API işlemi devam ediyorsa
+    ikinci isteği göndermiyoruz.
+  */
+  if (updatingProductId === selectedItem.productId) {
+    return;
+  }
+
+  try {
+    setUpdatingProductId(selectedItem.productId);
+
+    /*
+      Mevcut quantity kadar azaltma gönderiyoruz.
+
+      Örnek:
+      Ürün adedi 4 ise quantity=4 gönderilir.
+      Backend ürünü sepetten tamamen kaldırır.
+    */
+    const updatedCart =
+      await requests.Cart.deleteItem(
+        selectedItem.productId,
+        selectedItem.quantity
+      );
+
+    /*
+      Backend'in döndürdüğü güncel sepeti Context'e yazıyoruz.
+    */
+    setCart(updatedCart);
+
+    /*
+      Dialog'u kapatıyoruz.
+    */
+    setPendingRemovalProductId(null);
+
+    toast.success(
+      `${selectedItem.name} sepetten kaldırıldı.`
+    );
+  } catch (error) {
+    toast.error(
+      getErrorMessage(
+        error,
+        "Ürün sepetten kaldırılamadı."
+      )
+    );
+  } finally {
+    setUpdatingProductId(null);
+  }
+};
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" mt={5}>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="50vh"
+      >
         <CircularProgress />
       </Box>
     );
   }
 
+
   const cartItems = cart?.cartItems ?? [];
 
-  if (cartItems.length === 0) {
-    return (
-      <Container sx={{ mt: 5 }}>
-        <Typography variant="h4">Sepetinizde ürün yok</Typography>
-      </Container>
-    );
-  }
+const pendingRemovalItem =
+  pendingRemovalProductId === null
+    ? null
+    : cartItems.find(
+        (item) =>
+          item.productId === pendingRemovalProductId
+      ) ?? null;
 
+const cartTotal = cartItems.reduce(
+  (total, item) => total + item.price * item.quantity,
+  0
+);
+
+const totalQuantity = cartItems.reduce(
+  (total, item) => total + item.quantity,
+  0
+);
+
+if (cartItems.length === 0) {
   return (
-    <Container sx={{ mt: 5 }}>
-      <TableContainer component={Paper}>
+    <Container maxWidth="md" sx={{ mt: 8 }}>
+      <Paper
+        elevation={2}
+        sx={{
+          p: 6,
+          borderRadius: 3,
+          textAlign: "center",
+        }}
+      >
+        <ShoppingCartOutlinedIcon
+          sx={{
+            fontSize: 80,
+            mb: 2,
+            color: "text.secondary",
+          }}
+        />
+
+        <Typography variant="h5" fontWeight={700}>
+          Sepetiniz boş
+        </Typography>
+
+        <Typography color="text.secondary" sx={{ mt: 1 }}>
+          Sepetinize henüz bir ürün eklemediniz.
+        </Typography>
+      </Paper>
+    </Container>
+  );
+}
+
+return (
+  <>
+    <Container maxWidth="lg" sx={{ mt: 5, mb: 8 }}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1.5}
+        sx={{ mb: 3 }}
+      >
+        <ShoppingCartOutlinedIcon fontSize="large" />
+
+        <Box>
+          <Typography variant="h4" fontWeight={700}>
+            Alışveriş Sepeti
+          </Typography>
+
+          <Typography color="text.secondary">
+            Sepetinizde toplam {totalQuantity} ürün bulunuyor.
+          </Typography>
+        </Box>
+      </Stack>
+
+      <TableContainer
+        component={Paper}
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: "hidden",
+        }}
+      >
         <Table>
           <TableHead>
-            <TableRow>
-              <TableCell></TableCell>
-              <TableCell></TableCell>
-              <TableCell align="right">
-                <strong>Fiyat</strong>
+            <TableRow sx={{ backgroundColor: "action.hover" }}>
+              <TableCell sx={{ fontWeight: 700 }}>
+                Ürün
               </TableCell>
-              <TableCell align="right">
-                <strong>Adet</strong>
+
+              <TableCell sx={{ fontWeight: 700 }}>
+                Ürün adı
               </TableCell>
-              <TableCell align="right">
-                <strong>Toplam</strong>
+
+              <TableCell align="right" sx={{ fontWeight: 700 }}>
+                Birim fiyat
+              </TableCell>
+
+              <TableCell align="center" sx={{ fontWeight: 700 }}>
+                Adet
+              </TableCell>
+
+              <TableCell align="right" sx={{ fontWeight: 700 }}>
+                Toplam
+              </TableCell>
+
+              <TableCell align="center" sx={{ fontWeight: 700 }}>
+                İşlem
               </TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {cartItems.map((item) => (
-              <TableRow key={item.productId}>
-                <TableCell sx={{ width: 120 }}>
-                  <Box
-                    component="img"
-                    // src={item.imageUrl}
-                    src={`http://localhost:5164/images/images/${item.imageUrl}`}
-                    alt={item.name}
-                    sx={{
-                      width: 70,
-                      height: 70,
-                      objectFit: "contain",
-                    }}
-                  />
-                </TableCell>
+            {cartItems.map((item) => {
+              const isUpdating =
+                updatingProductId === item.productId;
 
-                <TableCell>
-                  <Typography>{item.name}</Typography>
-                </TableCell>
+              return (
+                <TableRow
+                  key={item.productId}
+                  hover
+                  sx={{
+                    "&:last-child td": {
+                      borderBottom: 0,
+                    },
+                  }}
+                >
+                  <TableCell sx={{ width: 110 }}>
+                    <Box
+                      component="img"
+                      src={`http://localhost:5164/images/images/${item.imageUrl}`}
+                      alt={item.name}
+                      sx={{
+                        width: 75,
+                        height: 75,
+                        objectFit: "contain",
+                        borderRadius: 2,
+                        p: 1,
+                      }}
+                    />
+                  </TableCell>
 
-                <TableCell align="right">
-                  {item.price}
-                </TableCell>
+                  <TableCell>
+                    <Typography fontWeight={600}>
+                      {item.name}
+                    </Typography>
 
-                <TableCell align="right">
-                  {item.quantity}
-                </TableCell>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                    >
+                      Ürün No: {item.productId}
+                    </Typography>
+                  </TableCell>
 
-                <TableCell align="right">
-                  {item.price * item.quantity}
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell align="right">
+                    <Typography fontWeight={500}>
+                      {formatPrice(item.price)}
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="center"
+                      spacing={1}
+                    >
+                      <Tooltip title="Adedi azalt">
+                        <span>
+                          <IconButton
+                            size="small"
+                            disabled={isUpdating}
+                            onClick={() =>
+                              handleDecrease(item.productId)
+                            }
+                            sx={{
+                              border: 1,
+                              borderColor: "divider",
+                            }}
+                          >
+                            <RemoveIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+
+                      <Box
+                        sx={{
+                          minWidth: 42,
+                          height: 36,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: 1,
+                          borderColor: "divider",
+                          borderRadius: 1,
+                        }}
+                      >
+                        {isUpdating ? (
+                          <CircularProgress size={18} />
+                        ) : (
+                          <Typography fontWeight={700}>
+                            {item.quantity}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      <Tooltip title="Adedi artır">
+                        <span>
+                          <IconButton
+                            size="small"
+                            disabled={isUpdating}
+                            onClick={() =>
+                              handleIncrease(item.productId)
+                            }
+                            sx={{
+                              border: 1,
+                              borderColor: "divider",
+                            }}
+                          >
+                            <AddIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </Stack>
+                  </TableCell>
+
+                  <TableCell align="right">
+                    <Typography fontWeight={700}>
+                      {formatPrice(
+                        item.price * item.quantity
+                      )}
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <Tooltip title="Sepetten kaldır">
+                      <span>
+                        <IconButton
+                          disabled={isUpdating}
+                          onClick={() =>
+                            handleOpenRemoveDialog(
+                              item.productId
+                            )
+                          }
+                          aria-label={`${item.name} ürününü sepetten kaldır`}
+                        >
+                          <DeleteIcon color="error" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
+
+        <Divider />
+
+        <Box
+          sx={{
+            p: 3,
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            gap: 3,
+            backgroundColor: "action.hover",
+          }}
+        >
+          <Box sx={{ textAlign: "right" }}>
+            <Typography color="text.secondary">
+              Genel toplam
+            </Typography>
+
+            <Typography variant="h5" fontWeight={800}>
+              {formatPrice(cartTotal)}
+            </Typography>
+          </Box>
+        </Box>
       </TableContainer>
     </Container>
-  );
+
+    <RemoveCartItemDialog
+      open={pendingRemovalProductId !== null}
+      productName={pendingRemovalItem?.name ?? ""}
+      productImageUrl={
+        pendingRemovalItem
+          ? `http://localhost:5164/images/images/${pendingRemovalItem.imageUrl}`
+          : undefined
+      }
+      loading={
+        pendingRemovalItem !== null &&
+        updatingProductId === pendingRemovalItem.productId
+      }
+      onCancel={handleCloseRemoveDialog}
+      onConfirm={handleConfirmRemove}
+    />
+  </>
+);
 }

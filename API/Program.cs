@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using API.Data;
 using Microsoft.EntityFrameworkCore;
 using SQLitePCL;
@@ -13,6 +14,33 @@ builder.Services.AddDbContext<DataContext>(options =>
 
     options.UseSqlite(connectionString);
 });
+
+
+//Kullanıcı aşırı istek atmaması için burada gerekli rate limiti ekledik apiye sürekli istek atıp durmasın
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("cart-policy", httpContext =>
+    {
+        var customerId =
+            httpContext.Request.Cookies["customerId"]
+            ?? httpContext.Connection.RemoteIpAddress?.ToString()
+            ?? "anonymous";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: customerId,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromSeconds(5),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
+});
+
+
 
 builder.Services.AddCors();
 
@@ -47,7 +75,7 @@ app.UseCors(options =>
     options.WithOrigins("http://localhost:3000", "http://127.0.0.1:3000");
 });
 app.UseAuthorization();
-
+app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();

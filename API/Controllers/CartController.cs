@@ -2,6 +2,7 @@ using API.Data;
 using API.Dtos;
 using API.Entity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
@@ -33,84 +34,108 @@ public class CartController : ControllerBase
         return CartToDto(cart);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<Cartdto>> AddItemToCart(int productId, int quantity = 1)
+   [HttpPost]
+   [EnableRateLimiting("cart-policy")]
+public async Task<ActionResult<Cartdto>> AddItemToCart(
+    int productId,
+    int quantity = 1)
+{
+    if (quantity <= 0)
     {
-        if (quantity <= 0)
-            return BadRequest(new { title = "Quantity 0'dan büyük olmalıdır." });
-
-        var customerId = GetCustomerId();
-
-        var product = await _context.Products.FindAsync(productId);
-
-        if (product == null)
-            return NotFound("Ürün bulunamadı.");
-
-        var cart = await _context.Carts
-            .Include(c => c.CartItems)
-            .FirstOrDefaultAsync(c => c.CustomerId == customerId);
-
-        if (cart == null)
+        return BadRequest(new
         {
-            cart = new Cart
-            {
-                CustomerId = customerId
-            };
-
-            _context.Carts.Add(cart);
-        }
-
-        var existingItem = cart.CartItems
-            .FirstOrDefault(x => x.ProductId == productId);
-
-        var currentQuantity = existingItem?.Quantity ?? 0;
-
-        if (currentQuantity + quantity > 3)
-            return BadRequest(new { title = "Bu üründen sepete en fazla 3 adet ekleyebilirsiniz." });
-
-        if (currentQuantity + quantity > product.Stock)
-            return BadRequest(new { title = "Sepete eklemek istediğiniz adet stok miktarını aşıyor." });
-
-        cart.AddItem(product, quantity);
-
-        await _context.SaveChangesAsync();
-
-        var updatedCart = await GetCartByCustomerId(customerId);
-
-        if (updatedCart == null)
-            return NotFound("Sepet bulunamadı.");
-
-        return CartToDto(updatedCart);
+            title = "Quantity 0'dan büyük olmalıdır."
+        });
     }
 
-    [HttpDelete]
-    public async Task<ActionResult<Cartdto>> DeleteItemFromCart(int productId, int quantity = 1)
+    var customerId = GetCustomerId();
+
+    var product = await _context.Products.FindAsync(productId);
+
+    if (product == null)
+        return NotFound("Ürün bulunamadı.");
+
+    var cart = await _context.Carts
+        .Include(c => c.CartItems)
+        .FirstOrDefaultAsync(c => c.CustomerId == customerId);
+
+    if (cart == null)
     {
-        if (quantity <= 0)
-            return BadRequest(new { title = "Quantity 0'dan büyük olmalıdır." });
+        cart = new Cart
+        {
+            CustomerId = customerId
+        };
 
-        var customerId = Request.Cookies["customerId"];
-
-        if (string.IsNullOrEmpty(customerId))
-            return BadRequest("Customer cookie bulunamadı.");
-
-        var cart = await GetCartByCustomerId(customerId);
-
-        if (cart == null)
-            return NotFound("Sepet bulunamadı.");
-
-        cart.DeleteItem(productId, quantity);
-
-        await _context.SaveChangesAsync();
-
-        var updatedCart = await GetCartByCustomerId(customerId);
-
-        if (updatedCart == null)
-            return NotFound("Sepet bulunamadı.");
-
-        return CartToDto(updatedCart);
+        _context.Carts.Add(cart);
     }
 
+    var existingItem = cart.CartItems
+        .FirstOrDefault(x => x.ProductId == productId);
+
+    var currentQuantity = existingItem?.Quantity ?? 0;
+
+    // 3 adet sınırı kaldırıldı.
+    // Yalnızca gerçek stok miktarı kontrol ediliyor.
+    if (currentQuantity + quantity > product.Stock)
+    {
+        return BadRequest(new
+        {
+            title = $"Stokta yalnızca {product.Stock} adet bulunmaktadır."
+        });
+    }
+
+    cart.AddItem(product, quantity);
+
+    await _context.SaveChangesAsync();
+
+    var updatedCart = await GetCartByCustomerId(customerId);
+
+    if (updatedCart == null)
+        return NotFound("Sepet bulunamadı.");
+
+    return CartToDto(updatedCart);
+}
+        [HttpDelete]
+        [EnableRateLimiting("cart-policy")]
+public async Task<ActionResult<Cartdto>> DeleteItemFromCart(
+    int productId,
+    int quantity = 1)
+{
+    if (quantity <= 0)
+    {
+        return BadRequest(new
+        {
+            title = "Quantity 0'dan büyük olmalıdır."
+        });
+    }
+
+    var customerId = Request.Cookies["customerId"];
+
+    if (string.IsNullOrEmpty(customerId))
+        return BadRequest("Customer cookie bulunamadı.");
+
+    var cart = await GetCartByCustomerId(customerId);
+
+    if (cart == null)
+        return NotFound("Sepet bulunamadı.");
+
+    var cartItem = cart.CartItems
+        .FirstOrDefault(x => x.ProductId == productId);
+
+    if (cartItem == null)
+        return NotFound("Sepette böyle bir ürün bulunamadı.");
+
+    cart.DeleteItem(productId, quantity);
+
+    await _context.SaveChangesAsync();
+
+    var updatedCart = await GetCartByCustomerId(customerId);
+
+    if (updatedCart == null)
+        return NotFound("Sepet bulunamadı.");
+
+    return CartToDto(updatedCart);
+}
     private async Task<Cart?> GetCartByCustomerId(string customerId)
     {
         return await _context.Carts

@@ -23,17 +23,33 @@ public class Cart()
         }
     }
 
-    public void DeleteItem(int productId,int quantity)
-    {
-        var item = CartItems.Where(c => c.ProductId == productId).FirstOrDefault();
-        if(item == null) return;
+    // public void DeleteItem(int productId,int quantity)
+    // {
+    //     var item = CartItems.Where(c => c.ProductId == productId).FirstOrDefault();
+    //     if(item == null) return;
 
+    //     item.Quantity -= quantity;
+    //     if(item.Quantity == 0)
+    //     {
+    //         CartItems.Remove(item);
+    //     }
+    // }
+    public void DeleteItem(int productId, int quantity)
+{
+    var item = CartItems.FirstOrDefault(x => x.ProductId == productId);
+
+    if (item == null)
+        return;
+
+    if (item.Quantity > quantity)
+    {
         item.Quantity -= quantity;
-        if(item.Quantity == 0)
-        {
-            CartItems.Remove(item);
-        }
     }
+    else
+    {
+        CartItems.Remove(item);
+    }
+}
 }
 
 public class CartItem()
