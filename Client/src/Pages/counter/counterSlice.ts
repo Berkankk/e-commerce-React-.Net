@@ -1,5 +1,5 @@
-import { PayloadAction } from './../../../node_modules/@reduxjs/toolkit/src/createAction';
-import { createSlice } from "@reduxjs/toolkit"
+import { PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
 export interface CounterState{
     value : number
@@ -26,7 +26,6 @@ export const counterSlice = createSlice({
 })
 
 export const {increment, decrement,incrementbyAmount } = counterSlice.actions;
-
 
 
 

@@ -2,8 +2,12 @@ import { useEffect, useState } from "react";
 import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 
-import requests from "../../api/requests";
-import { useCartContext } from "../../Context/CartContext";
+import { useAppDispatch, useAppSelector } from "../../Hooks/hooks";
+import {
+  fetchCart,
+  addItemToCart,
+  deleteItemFromCart,
+} from "../../Pages/Cart/cartSlice";
 import RemoveCartItemDialog from "../../Components/RemoveCartItemDialog";
 import {
   Box,
@@ -31,10 +35,9 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 
 export default function ShoppingCartPage() {
-  const { cart, setCart } = useCartContext();
-
-  // Sayfa ilk açıldığında sepet yüklenirken kullanılır.
-  const [loading, setLoading] = useState(true);
+  const cart = useAppSelector((state) => state.cart.cart);
+  const loading = useAppSelector((state) => state.cart.loading);
+  const dispatch = useAppDispatch();
 
   // Hangi ürünün API işlemi devam ediyor?
   const [updatingProductId, setUpdatingProductId] =
@@ -45,17 +48,10 @@ const [pendingRemovalProductId, setPendingRemovalProductId] =
 
 
   useEffect(() => {
-    requests.Cart.get()
-      .then((cart) => {
-        setCart(cart);
-      })
-      .catch((error) => {
-        console.log("Sepet alınamadı:", error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [setCart]);
+    if (!cart) {
+      dispatch(fetchCart());
+    }
+  }, [dispatch, cart]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("tr-TR", {
@@ -89,26 +85,8 @@ const [pendingRemovalProductId, setPendingRemovalProductId] =
     }
 
     try {
-      /*
-        Butonlara basıldığı anda ürünün ID'sini state'e
-        yazıyoruz. Böylece ilgili butonlar kapanacak.
-      */
       setUpdatingProductId(productId);
-
-      /*
-        Backend'e quantity=1 gönderiyoruz.
-        Backend ürünü bir adet artırıp güncel sepeti
-        CartDto olarak geri döndürüyor.
-      */
-      const updatedCart =
-        await requests.Cart.addItem(productId, 1);
-
-      /*
-        Güncel sepeti Context'e yazıyoruz.
-        React yeni cart değerini görünce tabloyu
-        otomatik yeniden render eder.
-      */
-      setCart(updatedCart);
+      await dispatch(addItemToCart({ productId, quantity: 1 })).unwrap();
     } catch (error) {
       toast.error(
         getErrorMessage(
@@ -135,14 +113,9 @@ const [pendingRemovalProductId, setPendingRemovalProductId] =
     try {
       setUpdatingProductId(productId);
 
-      /*
-        DELETE endpoint'ine quantity=1 gönderiyoruz.
-        Backend ürün miktarını bir azaltıyor.
-      */
-      const updatedCart =
-        await requests.Cart.deleteItem(productId, 1);
-
-      setCart(updatedCart);
+      await dispatch(
+        deleteItemFromCart({ productId, quantity: 1 })
+      ).unwrap();
     } catch (error) {
       toast.error(
         getErrorMessage(
@@ -209,23 +182,12 @@ const handleConfirmRemove = async () => {
   try {
     setUpdatingProductId(selectedItem.productId);
 
-    /*
-      Mevcut quantity kadar azaltma gönderiyoruz.
-
-      Örnek:
-      Ürün adedi 4 ise quantity=4 gönderilir.
-      Backend ürünü sepetten tamamen kaldırır.
-    */
-    const updatedCart =
-      await requests.Cart.deleteItem(
-        selectedItem.productId,
-        selectedItem.quantity
-      );
-
-    /*
-      Backend'in döndürdüğü güncel sepeti Context'e yazıyoruz.
-    */
-    setCart(updatedCart);
+    await dispatch(
+      deleteItemFromCart({
+        productId: selectedItem.productId,
+        quantity: selectedItem.quantity,
+      })
+    ).unwrap();
 
     /*
       Dialog'u kapatıyoruz.
@@ -247,7 +209,7 @@ const handleConfirmRemove = async () => {
   }
 };
 
-  if (loading) {
+  if (loading && !cart) {
     return (
       <Box
         sx={{
@@ -261,7 +223,6 @@ const handleConfirmRemove = async () => {
       </Box>
     );
   }
-
 
   const cartItems = cart?.cartItems ?? [];
 

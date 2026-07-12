@@ -1,26 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { CssBaseline, Container, CircularProgress, Box } from "@mui/material";
 import Header from "./Components/Header";
 import { Outlet } from "react-router";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import requests from "./api/requests";
-import { useCartContext } from "./Context/CartContext";
+import { useAppDispatch, useAppSelector } from "./Hooks/hooks";
+import { fetchCart } from "./Pages/Cart/cartSlice";
 
 function App() {
-  const { setCart } = useCartContext();
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const loading = useAppSelector((state) => state.cart.loading);
 
   useEffect(() => {
-    requests.Cart.get()
-      .then((cart) => setCart(cart))
-      .catch((error) => console.log(error))
-      .finally(() => setLoading(false));
-  }, [setCart]);
+    dispatch(fetchCart());
+  }, [dispatch]);
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" mt={5}>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
         <CircularProgress />
       </Box>
     );

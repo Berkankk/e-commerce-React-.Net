@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { NavLink, Link } from "react-router";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import { useCartContext } from "../Context/CartContext";
+import { useAppSelector } from "../Hooks/hooks";
 
 const links = [
   { title: "Home", to: "/" },
@@ -20,8 +20,8 @@ const links = [
 ];
 
 export default function Header() {
-  const {cart} = useCartContext();
-  const itemCount = cart?.cartItems.reduce((total,item) => total + item.quantity,0)
+  const cart = useAppSelector((state) => state.cart.cart);
+  const itemCount = cart?.cartItems.reduce((total, item) => total + item.quantity, 0) ?? 0;
 
   return (
     <AppBar position="static" elevation={2}>
