@@ -13,13 +13,34 @@ import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { Link } from "react-router";
-import requests from "../api/requests";
+import { useState } from "react";
+import { useAppDispatch } from "../Hooks/hooks";
+import { addItemToCart } from "../Pages/Cart/cartSlice";
+import { toast } from "react-toastify";
 
 type ProductItemProps = {
   product: IProduct;
 };
 
 function ProductItem({ product }: ProductItemProps) {
+  const dispatch = useAppDispatch();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAddToCart = async () => {
+    if (isLoading || product.stock === 0) return;
+
+    try {
+      setIsLoading(true);
+      await dispatch(
+        addItemToCart({ productId: product.id, quantity: 1 })
+      ).unwrap();
+      toast.success("Ürün sepete eklendi!");
+    } catch (error) {
+      toast.error("Ürün sepete eklenemedi.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <Card
       sx={{
@@ -91,7 +112,8 @@ function ProductItem({ product }: ProductItemProps) {
           <IconButton
             color="primary"
             sx={{ border: "1px solid #ddd" }}
-            onClick={() => requests.Cart.addItem(product.id)}
+            onClick={handleAddToCart}
+            disabled={isLoading || product.stock === 0}
           >
             <ShoppingCartOutlinedIcon />
           </IconButton>

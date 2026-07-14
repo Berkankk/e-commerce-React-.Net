@@ -15,50 +15,34 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import type { IProduct } from "../../Model/IProduct";
 import { AddShoppingCart } from "@mui/icons-material";
-import requests from "../../api/requests";
 import CircularProgress from "@mui/material/CircularProgress";
 import { toast } from "react-toastify";
+import { useAppDispatch } from "../../Hooks/hooks";
+import { addItemToCart } from "../Cart/cartSlice";
 
 export default function ProductDetails() {
+  const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(true);
+  const [addItemLoading, setAddItemLoading] = useState(false);
 
+  const handleAddItem = async (productId: number) => {
+    if (addItemLoading) return;
 
-    const [loading, setLoading] = useState(true);
-    const [addItemLoading, setAddItemLoading] = useState(false);
-
-    // function handleAddItem(productId: number) {
-    //   setAddItemLoading(true);
-
-    //   requests.Cart.addItem(productId)
-    //     .then(() => {
-    //       toast.success("Ürün sepete eklendi.");
-    //     })
-    //     .catch((error) => {
-    //       console.log(error);
-    //       toast.error("Ürün sepete eklenemedi.");
-    //     })
-    //     .finally(() => setAddItemLoading(false));
-    // }
-    function handleAddItem(productId: number) {
-      if (addItemLoading) return;
-
+    try {
       setAddItemLoading(true);
-
-      requests.Cart.addItem(productId)
-        .then(() => {
-          toast.success("Ürün sepete eklendi.", {
-            toastId: `cart-add-${productId}`,
-          });
-        })
-        .catch((error) => {
-          console.log(error);
-          toast.error("Ürün sepete eklenemedi.");
-        })
-        .finally(() => {
-          setTimeout(() => {
-            setAddItemLoading(false);
-          }, 700);
-        });
+      await dispatch(
+        addItemToCart({ productId, quantity: 1 })
+      ).unwrap();
+      toast.success("Ürün sepete eklendi.", {
+        toastId: `cart-add-${productId}`,
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error("Ürün sepete eklenemedi.");
+    } finally {
+      setAddItemLoading(false);
     }
+  };
 
   const { id } = useParams();
 

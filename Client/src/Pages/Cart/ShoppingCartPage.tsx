@@ -51,7 +51,7 @@ const [pendingRemovalProductId, setPendingRemovalProductId] =
     if (!cart) {
       dispatch(fetchCart());
     }
-  }, [dispatch, cart]);
+  }, [dispatch]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("tr-TR", {
