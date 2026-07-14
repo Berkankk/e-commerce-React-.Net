@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using API.Data;
+using API.Entity;
 using Microsoft.EntityFrameworkCore;
 using SQLitePCL;
 
@@ -43,7 +44,7 @@ builder.Services.AddRateLimiter(options =>
 
 
 builder.Services.AddCors();
-
+builder.Services.AddIdentity<AppUser,AppRole>().AddEntityFrameworkStores<DataContext>();
 builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();
@@ -77,5 +78,7 @@ app.UseCors(options =>
 app.UseAuthorization();
 app.UseRateLimiter();
 app.MapControllers();
+
+SeedData.Initialize(app);
 
 app.Run();
