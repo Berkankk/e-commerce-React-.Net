@@ -1,6 +1,7 @@
 using API.Dtos;
 using API.DTOs;
 using API.Entity;
+using API.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,13 +13,16 @@ public class AccountController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
+    private readonly ITokenService _tokenService;
 
     public AccountController(
         UserManager<AppUser> userManager,
-        SignInManager<AppUser> signInManager)
+        SignInManager<AppUser> signInManager,
+        ITokenService tokenService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _tokenService = tokenService;
     }
 
     // LOGIN
@@ -28,26 +32,48 @@ public class AccountController : ControllerBase
         var user = await _userManager.FindByNameAsync(loginDto.UserName);
 
         if (user == null)
-            return Unauthorized("Kullanıcı bulunamadı.");
+        {
+            return Unauthorized("Kullanıcı adı veya şifre hatalı.");
+        }
 
         var result = await _signInManager.CheckPasswordSignInAsync(
             user,
             loginDto.Password,
-            false);
+            lockoutOnFailure: false
+        );
 
         if (!result.Succeeded)
+        {
             return Unauthorized("Kullanıcı adı veya şifre hatalı.");
+        }
 
-            return Ok(new{token ="token"});
-
+        return Ok(new UserDto
+        {
+            UserName = user.UserName!,
+            Email = user.Email!,
+            Token = await _tokenService.CreateToken(user)
+        });
     }
 
     // REGISTER
     [HttpPost("register")]
     public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
     {
-        if (await _userManager.FindByNameAsync(registerDto.UserName) != null)
+        var existingUser =
+            await _userManager.FindByNameAsync(registerDto.UserName);
+
+        if (existingUser != null)
+        {
             return BadRequest("Bu kullanıcı adı kullanılmaktadır.");
+        }
+
+        var existingEmail =
+            await _userManager.FindByEmailAsync(registerDto.Email);
+
+        if (existingEmail != null)
+        {
+            return BadRequest("Bu e-posta adresi kullanılmaktadır.");
+        }
 
         var user = new AppUser
         {
@@ -56,17 +82,31 @@ public class AccountController : ControllerBase
             Email = registerDto.Email
         };
 
-        var result = await _userManager.CreateAsync(user, registerDto.Password);
+        var result = await _userManager.CreateAsync(
+            user,
+            registerDto.Password
+        );
 
         if (!result.Succeeded)
+        {
             return BadRequest(result.Errors);
+        }
 
-        await _userManager.AddToRoleAsync(user, "Customer");
+        var roleResult =
+            await _userManager.AddToRoleAsync(user, "Customer");
 
-        return new UserDto
+        if (!roleResult.Succeeded)
+        {
+            await _userManager.DeleteAsync(user);
+
+            return BadRequest(roleResult.Errors);
+        }
+
+        return Ok(new UserDto
         {
             UserName = user.UserName!,
             Email = user.Email!,
-        };
+            Token = await _tokenService.CreateToken(user)
+        });
     }
 }
