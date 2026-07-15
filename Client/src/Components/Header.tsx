@@ -8,9 +8,24 @@ import {
   Typography,
 } from "@mui/material";
 
-import { Link, NavLink } from "react-router";
+import {
+  Link,
+  NavLink,
+  useNavigate,
+} from "react-router";
+
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import { useAppSelector } from "../Hooks/hooks";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
+
+import {
+  useAppDispatch,
+  useAppSelector,
+} from "../Hooks/hooks";
+
+import {
+  logout,
+} from "../Pages/Account/AccountSlice";
 
 const links = [
   { title: "Home", to: "/" },
@@ -32,13 +47,60 @@ const authLinks = [
 ];
 
 export default function Header() {
-  const cart = useAppSelector((state) => state.cart.cart);
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
+  /*
+    Redux içerisindeki sepet bilgisini alıyoruz.
+  */
+  const cart = useAppSelector(
+    (state) => state.cart.cart
+  );
+
+  /*
+    Redux içerisindeki giriş yapan kullanıcıyı alıyoruz.
+
+    Kullanıcı giriş yapmadıysa:
+    user = null
+
+    Kullanıcı giriş yaptıysa:
+    user = {
+      userName,
+      email,
+      token
+    }
+  */
+  const user = useAppSelector(
+    (state) => state.account.user
+  );
 
   const itemCount =
     cart?.cartItems.reduce(
-      (total, item) => total + item.quantity,
+      (total, item) =>
+        total + item.quantity,
       0
     ) ?? 0;
+
+  /*
+    Çıkış Yap butonuna basıldığında çalışır.
+  */
+  const handleLogout = () => {
+    /*
+      AccountSlice içerisindeki logout action çalışır.
+
+      Bu işlem:
+      - Redux account.user bilgisini temizler.
+      - localStorage içerisindeki user bilgisini siler.
+    */
+    dispatch(logout());
+
+    /*
+      Kullanıcıyı ana sayfaya gönderiyoruz.
+    */
+    navigate("/", {
+      replace: true,
+    });
+  };
 
   return (
     <AppBar position="static" elevation={2}>
@@ -84,7 +146,8 @@ export default function Header() {
                 px: 2,
 
                 "&.active": {
-                  bgcolor: "rgba(255,255,255,0.18)",
+                  bgcolor:
+                    "rgba(255,255,255,0.18)",
                   fontWeight: 700,
                 },
               }}
@@ -102,26 +165,87 @@ export default function Header() {
             gap: 1,
           }}
         >
-          {authLinks.map((link) => (
-            <Button
-              key={link.to}
-              component={NavLink}
-              to={link.to}
-              sx={{
-                color: "white",
-                textTransform: "none",
-                borderRadius: 2,
-                px: 2,
+          {/*
+            Kullanıcı giriş yaptıysa:
+            - Kullanıcı adı
+            - Çıkış Yap butonu
 
-                "&.active": {
-                  bgcolor: "rgba(255,255,255,0.18)",
-                  fontWeight: 700,
-                },
-              }}
-            >
-              {link.title}
-            </Button>
-          ))}
+            Kullanıcı giriş yapmadıysa:
+            - Login
+            - Register
+          */}
+          {user ? (
+            <>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.75,
+                  mr: 0.5,
+                }}
+              >
+                <AccountCircleOutlinedIcon
+                  sx={{
+                    color: "white",
+                  }}
+                />
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "white",
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {user.userName}
+                </Typography>
+              </Box>
+
+              <Button
+                type="button"
+                onClick={handleLogout}
+                startIcon={
+                  <LogoutOutlinedIcon />
+                }
+                sx={{
+                  color: "white",
+                  textTransform: "none",
+                  borderRadius: 2,
+                  px: 2,
+
+                  "&:hover": {
+                    bgcolor:
+                      "rgba(255,255,255,0.18)",
+                  },
+                }}
+              >
+                Çıkış Yap
+              </Button>
+            </>
+          ) : (
+            authLinks.map((link) => (
+              <Button
+                key={link.to}
+                component={NavLink}
+                to={link.to}
+                sx={{
+                  color: "white",
+                  textTransform: "none",
+                  borderRadius: 2,
+                  px: 2,
+
+                  "&.active": {
+                    bgcolor:
+                      "rgba(255,255,255,0.18)",
+                    fontWeight: 700,
+                  },
+                }}
+              >
+                {link.title}
+              </Button>
+            ))
+          )}
 
           <IconButton
             component={Link}

@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import {
+  Controller,
+  useForm,
+} from "react-hook-form";
+
 import {
   Link as RouterLink,
   useNavigate,
 } from "react-router";
+
 import { toast } from "react-toastify";
 
 import {
@@ -26,7 +31,19 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 
 import requests from "../../api/requests";
-import type { LoginDto } from "../../Model/Account/LoginDto";
+
+import {
+  useAppDispatch,
+} from "../../Hooks/hooks";
+
+import type {
+  LoginDto,
+} from "../../Model/Account/LoginDto";
+
+import {
+  setUser,
+} from "./AccountSlice";
+
 import AuthPageLayout from "./Components/AuthPageLayout";
 
 const initialValues: LoginDto = {
@@ -37,7 +54,15 @@ const initialValues: LoginDto = {
 export default function LoginPage() {
   const navigate = useNavigate();
 
-  const [showPassword, setShowPassword] = useState(false);
+  /*
+    Redux action göndermek için dispatch oluşturuyoruz.
+  */
+  const dispatch = useAppDispatch();
+
+  const [
+    showPassword,
+    setShowPassword,
+  ] = useState(false);
 
   const {
     control,
@@ -51,33 +76,38 @@ export default function LoginPage() {
     mode: "onTouched",
   });
 
-  const onSubmit = async (loginDto: LoginDto) => {
+  const onSubmit = async (
+    loginDto: LoginDto
+  ) => {
     try {
-      const user = await requests.Account.login(loginDto);
+      /*
+        Kullanıcı bilgilerini backend'e gönderiyoruz.
+      */
+      const user =
+        await requests.Account.login(
+          loginDto
+        );
 
       /*
-        Şimdilik Redux accountSlice oluşturmadığımız için
-        kullanıcıyı localStorage'a geçici olarak kaydediyoruz.
+        Kullanıcıyı Redux'a kaydediyoruz.
 
-        Sonraki adımda bu işlemi Redux action içine taşıyacağız.
+        AccountSlice içerisindeki setUser:
+        - Redux state'ini doldurur.
+        - localStorage'a kullanıcıyı kaydeder.
       */
-      localStorage.setItem(
-        "user",
-        JSON.stringify(user)
-      );
+      dispatch(setUser(user));
 
       toast.success(
         `${user.userName}, hoş geldiniz.`
       );
 
+      /*
+        Giriş başarılı olunca ana sayfaya gönder.
+      */
       navigate("/", {
         replace: true,
       });
     } catch (error) {
-      /*
-        Hata mesajını requests.ts interceptor gösteriyor.
-        Burada tekrar toast vermiyoruz.
-      */
       console.error(
         "Login işlemi başarısız:",
         error
@@ -112,7 +142,8 @@ export default function LoginPage() {
               },
             }}
           >
-            Kullanıcı adınızı ve şifrenizi girerek oturum açın.
+            Kullanıcı adınızı ve şifrenizi
+            girerek oturum açın.
           </Alert>
 
           <Controller
@@ -121,6 +152,7 @@ export default function LoginPage() {
             rules={{
               required:
                 "Kullanıcı adı zorunludur.",
+
               minLength: {
                 value: 3,
                 message:
@@ -161,6 +193,7 @@ export default function LoginPage() {
             rules={{
               required:
                 "Şifre zorunludur.",
+
               minLength: {
                 value: 6,
                 message:
@@ -254,13 +287,16 @@ export default function LoginPage() {
             size="large"
             variant="contained"
             disabled={isSubmitting}
-            startIcon={<LoginOutlinedIcon />}
+            startIcon={
+              <LoginOutlinedIcon />
+            }
             sx={{
               minHeight: 54,
               borderRadius: 2.5,
               fontSize: "1rem",
               fontWeight: 700,
               textTransform: "none",
+
               boxShadow:
                 "0 12px 28px rgba(25,118,210,0.24)",
 
@@ -281,6 +317,7 @@ export default function LoginPage() {
             color="text.secondary"
           >
             Henüz hesabınız yok mu?{" "}
+
             <Link
               component={RouterLink}
               to="/register"
