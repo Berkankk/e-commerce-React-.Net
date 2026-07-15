@@ -7,7 +7,8 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { NavLink, Link } from "react-router";
+
+import { Link, NavLink } from "react-router";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useAppSelector } from "../Hooks/hooks";
 
@@ -19,13 +20,36 @@ const links = [
   { title: "Error", to: "/error" },
 ];
 
+const authLinks = [
+  {
+    title: "Login",
+    to: "/login",
+  },
+  {
+    title: "Register",
+    to: "/register",
+  },
+];
+
 export default function Header() {
   const cart = useAppSelector((state) => state.cart.cart);
-  const itemCount = cart?.cartItems.reduce((total, item) => total + item.quantity, 0) ?? 0;
+
+  const itemCount =
+    cart?.cartItems.reduce(
+      (total, item) => total + item.quantity,
+      0
+    ) ?? 0;
 
   return (
     <AppBar position="static" elevation={2}>
-      <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+      <Toolbar
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 2,
+        }}
+      >
+        {/* Logo / Uygulama adı */}
         <Typography
           variant="h6"
           component={NavLink}
@@ -34,12 +58,20 @@ export default function Header() {
             color: "white",
             textDecoration: "none",
             fontWeight: 700,
+            whiteSpace: "nowrap",
           }}
         >
           E-Commerce App
         </Typography>
 
-        <Box sx={{ display: "flex", gap: 1 }}>
+        {/* Ana menü */}
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            alignItems: "center",
+          }}
+        >
           {links.map((link) => (
             <Button
               key={link.to}
@@ -50,6 +82,7 @@ export default function Header() {
                 textTransform: "none",
                 borderRadius: 2,
                 px: 2,
+
                 "&.active": {
                   bgcolor: "rgba(255,255,255,0.18)",
                   fontWeight: 700,
@@ -61,9 +94,47 @@ export default function Header() {
           ))}
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <IconButton component={Link} to="/cart" size="large" color="inherit">
-            <Badge badgeContent={itemCount} color="secondary">
+        {/* Kullanıcı işlemleri ve sepet */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          {authLinks.map((link) => (
+            <Button
+              key={link.to}
+              component={NavLink}
+              to={link.to}
+              sx={{
+                color: "white",
+                textTransform: "none",
+                borderRadius: 2,
+                px: 2,
+
+                "&.active": {
+                  bgcolor: "rgba(255,255,255,0.18)",
+                  fontWeight: 700,
+                },
+              }}
+            >
+              {link.title}
+            </Button>
+          ))}
+
+          <IconButton
+            component={Link}
+            to="/cart"
+            size="large"
+            color="inherit"
+            aria-label="Sepete git"
+          >
+            <Badge
+              badgeContent={itemCount}
+              color="secondary"
+              showZero
+            >
               <ShoppingCartIcon />
             </Badge>
           </IconButton>
