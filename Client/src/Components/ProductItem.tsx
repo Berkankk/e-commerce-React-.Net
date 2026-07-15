@@ -10,7 +10,6 @@ import {
   Rating,
 } from "@mui/material";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
-import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { Link } from "react-router";
 import { useState } from "react";
@@ -82,7 +81,7 @@ function ProductItem({ product }: ProductItemProps) {
       </Box>
 
       <CardContent>
-        <Typography variant="h6" fontWeight={700}>
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
           {product.productName}
         </Typography>
 
@@ -97,7 +96,7 @@ function ProductItem({ product }: ProductItemProps) {
           </Typography>
         </Box>
 
-        <Typography variant="h6" color="primary" fontWeight={800}>
+        <Typography variant="h6" sx={{ color: "primary.main", fontWeight: 800 }}>
           ₺{product.productPrice.toLocaleString("tr-TR")}
         </Typography>
 

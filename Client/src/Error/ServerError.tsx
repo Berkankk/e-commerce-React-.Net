@@ -30,7 +30,7 @@ export default function ServerError() {
             p: 3,
           }}
         >
-          <Typography variant="h4" fontWeight={700}>
+          <Typography variant="h4" sx={{ fontWeight: 700 }}>
             500 Server Error
           </Typography>
 

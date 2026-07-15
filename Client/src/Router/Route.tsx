@@ -2,32 +2,69 @@ import { createBrowserRouter } from "react-router";
 import App from "../App";
 import HomePage from "../Pages/HomePage";
 import AboutPage from "../Pages/AboutPage";
+import ContactPage from "../Pages/ContactPage";
 import CatalogPage from "../Pages/Catalog/CatalogPage";
 import ProductDetails from "../Pages/Catalog/ProductDetails";
-import ContactPage from "../Pages/ContactPage";
 import ErrorPage from "../Pages/Catalog/ErrorPage";
+import ShoppingCartPage from "../Pages/Cart/ShoppingCartPage";
+import LoginPage from "../Pages/Account/LoginPage";
+import RegisterPage from "../Pages/Account/RegisterPage";
 import ServerError from "../Error/ServerError";
 import NotFound from "../Error/NotFound";
-import ShoppingCartPage from "../Pages/Cart/ShoppingCartPage";
 
-
-//Const değişken tanımlarken sonradan değiştirilemeyecek bir değişken tanımlamak için kullanılır.
-// let ise değiştirilebilir bir değişken tanımlamak için kullanılır.
 export const router = createBrowserRouter([
-    {
-    path: "/", //localhost:3000/ bu path ile açılır
-    element: <App />, //Ana şablon app olur burada
-    children: [ //children ile alt sayfalar tanımlanır
-        {path: "/", element: <HomePage />},
-        {path: "/about", element: <AboutPage />},
-        {path: "/contact", element: <ContactPage />},
-        {path: "/catalog", element: <CatalogPage />},
-        {path: "/cart", element: <ShoppingCartPage />},
-        {path:  "catalog/:id", element: <ProductDetails />}, //:id ile dinamik bir parametre tanımlanır
-        {path: "/error", element: <ErrorPage /> },
-        {path: "/server-error", element: <ServerError /> },
-        {path: "/not-found", element:<NotFound/>},
-        {path: "*", element:<NotFound/>}
-    ]
-    }
-])
+  {
+    path: "/",
+    element: <App />,
+    children: [
+      {
+        index: true,
+        element: <HomePage />,
+      },
+      {
+        path: "catalog",
+        element: <CatalogPage />,
+      },
+      {
+        path: "catalog/:id",
+        element: <ProductDetails />,
+      },
+      {
+        path: "cart",
+        element: <ShoppingCartPage />,
+      },
+      {
+        path: "about",
+        element: <AboutPage />,
+      },
+      {
+        path: "contact",
+        element: <ContactPage />,
+      },
+      {
+        path: "login",
+        element: <LoginPage />,
+      },
+      {
+        path: "register",
+        element: <RegisterPage />,
+      },
+      {
+        path: "error",
+        element: <ErrorPage />,
+      },
+      {
+        path: "server-error",
+        element: <ServerError />,
+      },
+      {
+        path: "not-found",
+        element: <NotFound />,
+      },
+      {
+        path: "*",
+        element: <NotFound />,
+      },
+    ],
+  },
+]);

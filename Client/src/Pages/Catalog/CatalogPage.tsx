@@ -22,7 +22,7 @@ useEffect(() => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" fontWeight={700} sx={{ mb: 3 }}>
+      <Typography variant="h4" sx={{ mb: 3, fontWeight: 700 }}>
         Katalog Sayfası
       </Typography>
 
